@@ -1,0 +1,25 @@
+#!/usr/bin/python2
+#
+#
+# rtodiff - show which files in a directory tree are not seeding in rtorrent
+# 2013 lists@tilton.co GPL
+
+if __name__ == '__main__':
+
+    import glob
+
+    from tools import slugify
+    from scgi import SCGIServerProxy
+
+    server = SCGIServerProxy('scgi:///tmp/rtorrent-rpc.socket')
+    rto_dirs = set([ slugify( unicode(server.d.get_directory(path)) )
+                    for path in server.download_list() ])
+
+    dirs = [path for path in glob.glob("/drum/bt/*/*")]
+    dirs_d = {}
+    for d in dirs:
+        norm = slugify( d.decode('utf-8') )
+        dirs_d[norm] = d
+
+    for k in sorted( set(dirs_d.keys()).difference( rto_dirs ) ):
+        print dirs_d[k]
