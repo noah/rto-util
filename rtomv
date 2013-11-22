@@ -3,6 +3,7 @@
 # rtomv - freely move seeding rtorrent files without interrupting seeding
 # 2013 lists@tilton.co GPL
 
+
 if __name__ == '__main__':
     import os
     import sys
@@ -10,36 +11,48 @@ if __name__ == '__main__':
     from tools import slugify
     from scgi import SCGIServerProxy
 
+
+    class IllegalArgumentError(ValueError): pass
+
     # source directory is normalized for below lookup
     try:
-        src, dst = sys.argv[1], sys.argv[2]
+        sources, dst = sys.argv[1:-1], os.path.realpath( sys.argv[-1] )
+        if len(sources) < 1: raise IllegalArgumentError("missing file or dst operand")
+        if len(sources) > 1 and not os.path.isdir( dst ):
+            raise IllegalArgumentError("target '{}' is not a directory".format(dst))
     except IndexError:
-        sys.exit("Usage: {} <src> <dst>".format(sys.argv[0]))
+        exit("Usage: {} [FILE] <dst>".format(sys.argv[0]))
+    except IllegalArgumentError, e:
+        exit("{}".format(e))
 
     server = SCGIServerProxy('scgi:///tmp/rtorrent-rpc.socket')
 
     # map normalized directory names to hashes
     d = dict()
     for hash in server.download_list():
-        d[ slugify( unicode( os.path.basename( server.d.get_directory(hash) )) ) ] = hash
+        d[ slugify( unicode( os.path.basename( server.d.get_base_path(hash) )) ) ] = hash
 
-    # normalized source directory exists in map (src is in rtorrent)
-    src_slug = slugify( unicode( os.path.basename( src ) ) )
-    if src_slug in d:   src_hash = d[src_slug]
-    else:               sys.exit("src not found: {}".format( src ))
-
-    # for an explanation of the following, see:
-    # http://superuser.com/questions/410507/move-already-i-e-not-new-completed-files-in-rtorrent
-    # rtorrent RPC generally:
-    # http://code.google.com/p/pyroscope/wiki/RtXmlRpcReference
 
     from shutil import move as mv
 
-    try:
-        server.d.set_directory(src_hash, dst)
-        mv(src, dst)
-        server.d.check_hash(src_hash)
-        server.d.resume(src_hash)
-        print "mv {} -> {}".format(src, dst)
-    except Exception, e:
-        sys.exit( "{}".format( e ) )
+    #from pprint import pprint; pprint( d )
+    for src in sources:
+
+        # normalized source directory exists in map (src is in rtorrent)
+        src_slug = slugify( unicode( os.path.basename( src ) ) )
+        if src_slug in d:   src_hash = d[src_slug]
+        else:               exit("src not found: {}".format( src ))
+
+        # for an explanation of the following, see:
+        # http://superuser.com/questions/410507/move-already-i-e-not-new-completed-files-in-rtorrent
+        # rtorrent RPC generally:
+        # http://code.google.com/p/pyroscope/wiki/RtXmlRpcReference
+
+        try:
+            server.d.set_directory(src_hash, dst)
+            mv(src, dst)
+            server.d.check_hash(src_hash)
+            server.d.resume(src_hash)
+            print "mv {} -> {}".format(src, dst)
+        except Exception, e:
+            exit( "{}".format( e ) )
