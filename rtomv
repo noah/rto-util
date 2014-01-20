@@ -7,9 +7,11 @@
 if __name__ == '__main__':
     import os
     import sys
+    import errno
 
     from tools import slugify
     from scgi import SCGIServerProxy
+    from socket import error as socket_error
 
 
     class IllegalArgumentError(ValueError): pass
@@ -27,21 +29,29 @@ if __name__ == '__main__':
 
     server = SCGIServerProxy('scgi:///tmp/rtorrent-rpc.socket')
 
-    # map normalized directory names to hashes
-    d = dict()
-    for hash in server.download_list():
-        d[ slugify( unicode( os.path.basename( server.d.get_base_path(hash) )) ) ] = hash
+    try:
+        # map normalized directory names to hashes
+        d = dict()
+        for hash in server.download_list():
+            d[ slugify( unicode( os.path.basename( server.d.get_base_path(hash) )) ) ] = hash
+    except socket_error as serr:
+        if serr.errno == errno.ECONNREFUSED:
+            print "Is rtorrent running?"
+            exit()
+        raise serr
 
 
     from shutil import move as mv
 
-    #from pprint import pprint; pprint( d )
     for src in sources:
 
         # normalized source directory exists in map (src is in rtorrent)
         src_slug = slugify( unicode( os.path.basename( src ) ) )
         if src_slug in d:   src_hash = d[src_slug]
-        else:               exit("src not found: {}".format( src ))
+        else:
+            from pprint import pprint; pprint( d )
+            print src
+            exit("src_slug not found: {}".format( src_slug ))
 
         # for an explanation of the following, see:
         # http://superuser.com/questions/410507/move-already-i-e-not-new-completed-files-in-rtorrent

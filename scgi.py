@@ -100,13 +100,15 @@ class SCGIServerProxy(xmlrpclib.ServerProxy):
 
         return response
 
-    def __repr__(self):
-        return (
-            "<SCGIServerProxy for %s%s>" %
-            (self.__host, self.__handler)
-        )
+    # This Code Eats Exceptions ;[
+    #
+    # def __repr__(self):
+    #     return (
+    #         "<SCGIServerProxy for %s%s>" %
+    #         (self.__host, self.__handler)
+    #     )
 
-    __str__ = __repr__
+    #__str__ = __repr__
 
     def __getattr__(self, name):
         # magic method dispatcher
