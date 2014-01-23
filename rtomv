@@ -51,7 +51,7 @@ if __name__ == '__main__':
         else:
             from pprint import pprint; pprint( d )
             print src
-            exit("src_slug not found: {}".format( src_slug ))
+            exit("src_slug not found: {} - torrent removed from rtorrent?".format( src_slug ))
 
         # for an explanation of the following, see:
         # http://superuser.com/questions/410507/move-already-i-e-not-new-completed-files-in-rtorrent
