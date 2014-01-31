@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 #
 # rtomv - freely move seeding rtorrent files without interrupting seeding
-# 2013 lists@tilton.co GPL
+# 2013 code@tilton.co GPL
 
 
 if __name__ == '__main__':
@@ -9,7 +9,7 @@ if __name__ == '__main__':
     import sys
     import errno
 
-    from tools import slugify
+    from tools import slugify, owner
     from scgi import SCGIServerProxy
     from socket import error as socket_error
 
@@ -20,8 +20,11 @@ if __name__ == '__main__':
     try:
         sources, dst = sys.argv[1:-1], os.path.realpath( sys.argv[-1] )
         if len(sources) < 1: raise IllegalArgumentError("missing file or dst operand")
-        if len(sources) > 1 and not os.path.isdir( dst ):
+        if (len(sources) > 1 and not os.path.isdir( dst )):
             raise IllegalArgumentError("target '{}' is not a directory".format(dst))
+        owner = owner(dst)
+        if owner != os.getenv('USER'):
+            raise IllegalArgumentError("target '{}' is not writeable (owner: {})".format(dst, owner))
     except IndexError:
         exit("Usage: {} [FILE] <dst>".format(sys.argv[0]))
     except IllegalArgumentError, e:
@@ -46,11 +49,10 @@ if __name__ == '__main__':
     for src in sources:
 
         # normalized source directory exists in map (src is in rtorrent)
-        src_slug = slugify( unicode( os.path.basename( src ) ) )
+        src_slug = slugify( unicode( os.path.basename( os.path.normpath( src ) ) ) )
         if src_slug in d:   src_hash = d[src_slug]
         else:
             from pprint import pprint; pprint( d )
-            print src
             exit("src_slug not found: {} - torrent removed from rtorrent?".format( src_slug ))
 
         # for an explanation of the following, see:

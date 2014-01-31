@@ -13,3 +13,9 @@ def slugify(text, delim=u'-'):
         if word:
             result.append(word)
     return unicode(delim.join(result))
+
+from os import stat
+from pwd import getpwuid
+
+def owner(path):
+    return getpwuid(stat(path).st_uid).pw_name
