@@ -46,14 +46,21 @@ if __name__ == '__main__':
 
     from shutil import move as mv
 
+    class Move(object):
+        RTORRENT=1
+        STANDARD=2
+
     for src in sources:
+
+        move = Move.RTORRENT
 
         # normalized source directory exists in map (src is in rtorrent)
         src_slug = slugify( unicode( os.path.basename( os.path.normpath( src ) ) ) )
         if src_slug in d:   src_hash = d[src_slug]
         else:
-            from pprint import pprint; pprint( d )
-            exit("src_slug not found: {} - torrent removed from rtorrent?".format( src_slug ))
+            move = Move.STANDARD
+            #from pprint import pprint; pprint( d )
+            print("warn: src not found {} - torrent removed from rtorrent?".format( src ))
 
         # for an explanation of the following, see:
         # http://superuser.com/questions/410507/move-already-i-e-not-new-completed-files-in-rtorrent
@@ -61,10 +68,12 @@ if __name__ == '__main__':
         # http://code.google.com/p/pyroscope/wiki/RtXmlRpcReference
 
         try:
-            server.d.set_directory(src_hash, dst)
+            if move == Move.RTORRENT:
+                server.d.set_directory(src_hash, dst)
             mv(src, dst)
-            server.d.check_hash(src_hash)
-            server.d.resume(src_hash)
+            if move == Move.RTORRENT:
+                server.d.check_hash(src_hash)
+                server.d.resume(src_hash)
             print "mv {} -> {}".format(src, dst)
         except Exception, e:
             exit( "{}".format( e ) )
