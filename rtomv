@@ -39,8 +39,7 @@ if __name__ == '__main__':
             d[ slugify( unicode( os.path.basename( server.d.get_base_path(hash) )) ) ] = hash
     except socket_error as serr:
         if serr.errno == errno.ECONNREFUSED:
-            print "Is rtorrent running?"
-            exit()
+            print "warn: rtorrent not running"
         raise serr
 
 
