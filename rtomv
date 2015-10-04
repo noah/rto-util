@@ -1,7 +1,13 @@
 #!/usr/bin/env python2
+# encoding=utf8
 #
 # rtomv - freely move seeding rtorrent files without interrupting seeding
 # 2013 code@tilton.co GPL
+
+
+import sys
+reload(sys)
+sys.setdefaultencoding('utf8')
 
 
 if __name__ == '__main__':
