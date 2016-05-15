@@ -15,7 +15,7 @@ if __name__ == '__main__':
     import sys
     import errno
 
-    from tools import slugify, owner
+    from tools import slugify, owner, mkdir_p
     from scgi import SCGIServerProxy
     from socket import error as socket_error
 
@@ -26,8 +26,10 @@ if __name__ == '__main__':
     try:
         sources, dst = sys.argv[1:-1], os.path.realpath( sys.argv[-1] )
         if len(sources) < 1: raise IllegalArgumentError("missing file or dst operand")
-        if (len(sources) > 1 and not os.path.isdir( dst )):
+        if len(sources) > 1:
             raise IllegalArgumentError("target '{}' is not a directory".format(dst))
+        if not os.path.isdir( dst ):
+            mkdir_p(dst)
         owner = owner(dst)
         if owner != os.getenv('USER'):
             raise IllegalArgumentError("target '{}' is not writeable (owner: {})".format(dst, owner))

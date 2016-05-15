@@ -14,8 +14,18 @@ def slugify(text, delim=u'-'):
             result.append(word)
     return unicode(delim.join(result))
 
-from os import stat
+import errno
+from os import stat, makedirs, path
 from pwd import getpwuid
 
 def owner(path):
     return getpwuid(stat(path).st_uid).pw_name
+
+def mkdir_p(p):
+    try:
+        makedirs(p)
+    except OSError as exc:  # Python >2.5
+        if exc.errno == errno.EEXIST and path.isdir(p):
+            pass
+        else:
+            raise
