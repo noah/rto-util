@@ -39,12 +39,15 @@ if __name__ == '__main__':
         exit("{}".format(e))
 
     server = SCGIServerProxy('scgi:///tmp/rtorrent-rpc.socket')
+    #for m in server.system.listMethods():
+    #    print m
+    #sys.exit()
 
     try:
         # map normalized directory names to hashes
         d = dict()
         for hash in server.download_list():
-            d[ slugify( unicode( os.path.basename( server.d.get_base_path(hash) )) ) ] = hash
+            d[ slugify( unicode( os.path.basename( server.d.base_path(hash) )) ) ] = hash
     except socket_error as serr:
         if serr.errno == errno.ECONNREFUSED:
             print "warn: rtorrent not running"
@@ -76,7 +79,7 @@ if __name__ == '__main__':
 
         try:
             if move == Move.RTORRENT:
-                server.d.set_directory(src_hash, dst)
+                server.d.directory_base.set(src_hash, dst)
             mv(src, dst)
             if move == Move.RTORRENT:
                 server.d.check_hash(src_hash)
